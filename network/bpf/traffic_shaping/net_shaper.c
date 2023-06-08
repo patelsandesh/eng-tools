@@ -35,14 +35,6 @@ int map_open(const char *filepath)
     return fd;
 }
 
-static inline int calculate_expected_bw(uint64_t rate, uint64_t reservation)
-{
-    // ensure non-zero expected bandwidth
-    // return 2*rate < reservation ? 2*rate+10 * MB : reservation;
-    // return rate < reservation ? BWE : reservation;
-    return reservation;
-}
-
 int shaper()
 {
     uint64_t *temp, *current, *last;
@@ -79,33 +71,13 @@ int shaper()
         {
             uint64_t bw_i = (current[i] - last[i]) / SLEEP_TIME;
 
-            // bw_rate[i] = calculate_expected_bw(bw_i, reservation[i]);
             printf("class %d\tbw mb: %lu\t\t bytes %lu \t\t\t next-rate mb %lu\n", i, bw_i / (MB), current[i], bw_rate[i] / MB);
-            // if (bw_i < reservation[i]){
-            //     unused += (reservation[i] - bw_i);
-            // } else {
-            //     used += reservation[i];
-            // }
-            // unused += (reservation[i] - bw_i);
         }
         printf("unused bw %lu", unused / (MB));
         printf("\n\n");
         temp = last;
         last = current;
         current = temp;
-
-        // for(int i=0; i<NCLASSES; i++){
-        //     if (bw_rate[i] == reservation [i]){
-        //         bw_rate[i] += (reservation[i]*unused) / (used);
-        //     }
-        //     bpf_map_update_elem(rate_fd, &i, &bw_rate[i], BPF_ANY);
-        // }
-        // for(int i=NCLASSES; i<NCLASSES+1; i++){
-        //     // if (bw_rate[i] == reservation [i]){
-        //     //     bw_rate[i] += (reservation[i]*unused) / (used);
-        //     // }
-        //     bpf_map_update_elem(rate_fd, &i, &unused, BPF_ANY);
-        // }
         sleep(SLEEP_TIME);
     }
     return 0;
